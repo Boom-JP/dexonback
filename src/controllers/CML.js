@@ -92,9 +92,10 @@ function popOutside(arr) {
 }
 
 router.post('/add', jsonParser, (req, res) => {
-    var line_number_id = req.body.values.line_number_id
-    var cml_number = req.body.values.cml_number
-    var cml_description = req.body.values.cml_description
+    var line_number_id = req.body.line_number_id
+    console.log(req.body);
+    var cml_number = req.body.cml_number
+    var cml_description = req.body.cml_description
     new Promise((resolve, reject) => {
         database.query(`SELECT * FROM INFO WHERE id = '${line_number_id}'`, 
             (err, result) => {
@@ -159,8 +160,8 @@ router.post('/add', jsonParser, (req, res) => {
     });
 })
 
-router.delete('/remove', jsonParser, function (req, res){
-    var id = req.body.values.id
+router.delete('/remove/:key', jsonParser, function (req, res){
+    const id = req.params.key;
     var sql = 'DELETE FROM CML WHERE id= ?'
     database.query(sql, id, (err, result) => {
         if (err){ return res.json({status: 'error', message: err});}
@@ -169,10 +170,11 @@ router.delete('/remove', jsonParser, function (req, res){
 })
 
 router.patch('/update', jsonParser, function (req, res){
-    var id = req.body.values.id
-    var line_number_id = req.body.values.line_number_id
-    var cml_number = req.body.values.cml_number
-    var cml_description = req.body.values.cml_description
+    console.log(req.body);
+    var id = req.body.id
+    var line_number_id = req.body.line_number_id
+    var cml_number = req.body.cml_number
+    var cml_description = req.body.cml_description
     new Promise((resolve, reject) => {
         database.query(`SELECT * FROM INFO WHERE id = ${line_number_id}`, 
             (err, result) => {
@@ -243,21 +245,38 @@ router.get('/view', jsonParser, (req, res, next) => {
     })
 })
 
-// router.post('/search', jsonParser, (req, res) => {
-//     var keyword = req.body.values.device_name
-//     var sql = `SELECT * FROM tb_device WHERE device_name = '${keyword}'`
-//     database.query(sql, (err, result) => {
-//         if (err){ return res.status(400).json({status: 'error', message: err});}
-//         return res.status(200).json(result)
-//     })
-// })
+router.post('/search/:line_number', jsonParser, (req, res, next) => {
+    const line_number = req.params.line_number;
+    var sqlSearch = `SELECT id FROM INFO WHERE line_number = '${line_number}'`
+    database.query(sqlSearch, (error, data) => {
+        if (error) {
+            res.status(400).json({'status':'error','error':error});
+            return
+        }
+        let id = data[0].id
+        var sql = `SELECT * FROM CML WHERE line_number_id = ${id}`
+        database.query(sql, (error, data) => {
+            if (error) {
+                return res.status(400).json({'status':'error','error':error});
+            }
+            console.log(data)
+            res.status(200).json({data});
+        })
+        })
+})
 
-// router.get('/SNList', jsonParser,(req, res)=> {
-//     var sql = "SELECT DISTINCT SN FROM tb_position"
-//     database.query(sql, (err,data)=>{
-//         console.log(data);
-//         return res.json(data)
-//     })
-// })
+router.post('/search', jsonParser, (req, res, next) => {
+    var id = req.body.values.id
+    var sql = `SELECT * FROM CML WHERE id = ${id}`
+
+    database.query(sql, (error, data) => {
+        if (error) {
+            res.status(400).json({'status':'error','error':error});
+            return
+        }
+        // console.log(data)
+        res.status(200).json({data});
+    })
+})
 
 module.exports = router;

@@ -9,22 +9,23 @@ const database = require('../configs/database');
 const { default: next } = require("next");
 
 router.post('/add', jsonParser, (req, res) => {
-    var tp_number_id = req.body.values.tp_number_id
-    var inspection_date = req.body.values.inspection_date
-    var actual_thickness = req.body.values.actual_thickness
-    var values = [tp_number_id,
-                  inspection_date,
-                  actual_thickness
-                ];
+    var line_number = req.body.line_number
+    var cml_number = req.body.cml_number
+    var tp_number = req.body.tp_number
+    console.log(req.body.tp_number);
+    var inspection_date = req.body.inspection_date
+    var actual_thickness = req.body.actual_thickness
     var sql =   ` 
-                  INSERT INTO THICKNESS (   tp_number_id, 
-                                            inspection_date, 
+                  INSERT INTO THICKNESS (   line_number,
+                                            cml_number,
+                                            tp_number,
+                                            inspection_date,
                                             actual_thickness
                                         ) 
-                  VALUES (?, ?, ?)
+                  VALUES ('${line_number}', '${cml_number}', '${tp_number}', '${inspection_date}', '${actual_thickness}')
                 `
 
-    database.query(sql, values, (err,results, fields) => {
+    database.query(sql, (err,results, fields) => {
             if (err){
                 return res.json({status: 'error', message: err})
             }
@@ -35,8 +36,8 @@ router.post('/add', jsonParser, (req, res) => {
     )
 })
 
-router.delete('/remove', jsonParser, function (req, res){
-    var id = req.body.values.id
+router.delete('/remove/:key', jsonParser, function (req, res){
+    var id = req.params.key;
     var sql = 'DELETE FROM THICKNESS WHERE id= ?'
     database.query(sql, id, (err, result) => {
         if (err){ return res.json({status: 'error', message: err});}
@@ -46,12 +47,16 @@ router.delete('/remove', jsonParser, function (req, res){
 })
 
 router.patch('/update', jsonParser, function (req, res){
-    var id = req.body.values.id
-    var tp_number_id = req.body.values.tp_number_id
-    var inspection_date = req.body.values.inspection_date
-    var actual_thickness = req.body.values.actual_thickness
+    var id = req.body.id
+    var tp_number = req.body.tp_number
+    var cml_number = req.body.cml_number
+    var line_number = req.body.line_number
+    var inspection_date = req.body.inspection_date
+    var actual_thickness = req.body.actual_thickness
     var sql = ` UPDATE THICKNESS
-                SET tp_number_id = '${tp_number_id}',
+                SET tp_number = '${tp_number}',
+                    cml_number = '${cml_number},
+                    line_number = '${line_number},
                     inspection_date = '${inspection_date}',
                     actual_thickness = '${actual_thickness}',
                     updated_date = CURRENT_TIMESTAMP
@@ -74,6 +79,45 @@ router.get('/view', jsonParser, (req, res, next) => {
             return
         }
         console.log(data)
+        res.status(200).json({data});
+    })
+})
+
+router.post('/search/:line_number/:cml_number/:tp_number', jsonParser, (req, res, next) => {
+    const line_number = req.params.line_number;
+    const cml_number = req.params.cml_number;
+    const tp_number = req.params.tp_number;
+    var sqlSearch = `   SELECT
+                            id,
+                            line_number,
+                            cml_number,
+                            tp_number,
+                            DATE_FORMAT(inspection_date, '%Y-%m-%d') AS inspection_date,
+                            actual_thickness
+                        FROM THICKNESS 
+                        WHERE line_number = '${line_number}' 
+                        AND cml_number = '${cml_number}' 
+                        AND tp_number = '${tp_number}'
+                    `
+    database.query(sqlSearch, (error, data) => {
+        if (error) {
+            return res.status(400).json({'status':'error','error':error});
+        }
+        console.log(data)
+        res.status(200).json({data});
+    })
+})
+
+router.post('/search', jsonParser, (req, res, next) => {
+    var id = req.body.values.id
+    var sql = `SELECT * FROM THICKNESS WHERE id = ${id}`
+
+    database.query(sql, (error, data) => {
+        if (error) {
+            res.status(400).json({'status':'error','error':error});
+            return
+        }
+        // console.log(data)
         res.status(200).json({data});
     })
 })

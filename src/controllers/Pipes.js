@@ -4,29 +4,30 @@ var cors = require('cors')
 var bodyParser = require('body-parser')
 var jsonParser = bodyParser.json()
 var router = express.Router()
-
+const moment = require('moment');
 const database = require('../configs/database');
 const { default: next } = require("next");
 
+
 router.post('/add', jsonParser, (req, res) => {
-    var line_number = req.body.values.line_number
-    var location = req.body.values.location
-    var from = req.body.values.from
-    var to = req.body.values.to
-    var drawing_number = req.body.values.drawing_number
-    var service = req.body.values.service
-    var material = req.body.values.material
-    var inservice_date = req.body.values.inservice_date
-    var pipe_size = req.body.values.pipe_size
-    var original_thickness = req.body.values.original_thickness
-    var stress = req.body.values.stress
-    var joint_efficiency = req.body.values.joint_efficiency
-    var ca = req.body.values.ca
-    var design_life = req.body.values.design_life
-    var design_pressure = req.body.values.design_pressure
-    var operating_pressure = req.body.values.operating_pressure
-    var design_temperature = req.body.values.design_temperature
-    var operating_temperature = req.body.values.operating_temperature
+    var line_number = req.body.line_number
+    var location = req.body.location
+    var from = req.body.from
+    var to = req.body.to
+    var drawing_number = req.body.drawing_number
+    var service = req.body.service
+    var material = req.body.material
+    var inservice_date = req.body.inservice_date
+    var pipe_size = req.body.pipe_size
+    var original_thickness = req.body.original_thickness
+    var stress = req.body.stress
+    var joint_efficiency = req.body.joint_efficiency
+    var ca = req.body.ca
+    var design_life = req.body.design_life
+    var design_pressure = req.body.design_pressure
+    var operating_pressure = req.body.operating_pressure
+    var design_temperature = req.body.design_temperature
+    var operating_temperature = req.body.operating_temperature
     var values = [line_number, 
                   location, 
                   from, 
@@ -72,15 +73,16 @@ router.post('/add', jsonParser, (req, res) => {
             if (err){
                 return res.json({status: 'error', message: err})
             }
-            console.log(results);
-            console.log(fields);
+            // console.log(results);
+            // console.log(fields);
             return res.status(201).json({status: "ok"})
         }
     )
 })
 
-router.delete('/remove', jsonParser, function (req, res){
-    var id = req.body.values.id
+router.delete('/remove/:key', jsonParser, function (req, res){
+    const id = req.params.key;
+    // console.log(id);
     var sql = 'DELETE FROM INFO WHERE id= ?'
     database.query(sql, id, (err, result) => {
         if (err){ return res.json({status: 'error', message: err});}
@@ -90,25 +92,25 @@ router.delete('/remove', jsonParser, function (req, res){
 })
 
 router.patch('/update', jsonParser, function (req, res){
-    var id = req.body.values.id
-    var line_number = req.body.values.line_number
-    var location = req.body.values.location
-    var from = req.body.values.from
-    var to = req.body.values.to
-    var drawing_number = req.body.values.drawing_number
-    var service = req.body.values.service
-    var material = req.body.values.material
-    var inservice_date = req.body.values.inservice_date
-    var pipe_size = req.body.values.pipe_size
-    var original_thickness = req.body.values.original_thickness
-    var stress = req.body.values.stress
-    var joint_efficiency = req.body.values.joint_efficiency
-    var ca = req.body.values.ca
-    var design_life = req.body.values.design_life
-    var design_pressure = req.body.values.design_pressure
-    var operating_pressure = req.body.values.operating_pressure
-    var design_temperature = req.body.values.design_temperature
-    var operating_temperature = req.body.values.operating_temperature
+    var id = req.body.id
+    var line_number = req.body.line_number
+    var location = req.body.location
+    var from = req.body.from
+    var to = req.body.to
+    var drawing_number = req.body.drawing_number
+    var service = req.body.service
+    var material = req.body.material
+    var inservice_date = moment(req.body.inservice_date).format('YYYY-MM-DD')
+    var pipe_size = req.body.pipe_size
+    var original_thickness = req.body.original_thickness
+    var stress = req.body.stress
+    var joint_efficiency = req.body.joint_efficiency
+    var ca = req.body.ca
+    var design_life = req.body.design_life
+    var design_pressure = req.body.design_pressure
+    var operating_pressure = req.body.operating_pressure
+    var design_temperature = req.body.design_temperature
+    var operating_temperature = req.body.operating_temperature
     var sql = ` UPDATE INFO
                 SET line_number = '${line_number}',
                     location = '${location}',
@@ -140,19 +142,19 @@ router.patch('/update', jsonParser, function (req, res){
 
 router.get('/view', jsonParser, (req, res, next) => {
 
-    var sql = 'SELECT * FROM INFO ORDER BY line_number DESC'
+    var sql = 'SELECT * FROM INFO'
 
     database.query(sql, (error, data) => {
         if (error) {
             res.status(400).json({'status':'error','error':error});
             return
         }
-        console.log(data)
+        // console.log(data)
         res.status(200).json({data});
     })
 })
 
-router.get('/search', jsonParser, (req, res, next) => {
+router.post('/search', jsonParser, (req, res, next) => {
     var id = req.body.values.id
     var sql = `SELECT * FROM INFO WHERE id = ${id}`
 
@@ -161,9 +163,10 @@ router.get('/search', jsonParser, (req, res, next) => {
             res.status(400).json({'status':'error','error':error});
             return
         }
-        console.log(data)
+        // console.log(data)
         res.status(200).json({data});
     })
 })
 
 module.exports = router;
+
